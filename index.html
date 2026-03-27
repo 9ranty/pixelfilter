@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PixelFilter</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+      font-size: 12px;
+      color: #333;
+      min-height: 100vh;
+      background: #e8e8e8;
+    }
+
+    /* === Leopard Window === */
+    .window {
+      width: 100%;
+      min-height: 100vh;
+      background: #e8e8e8;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Titlebar */
+    .titlebar {
+      height: 22px;
+      background: linear-gradient(180deg, #d8d8d8 0%, #c0c0c0 50%, #b0b0b0 51%, #bcbcbc 100%);
+      border-bottom: 1px solid #888;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      position: relative;
+      user-select: none;
+    }
+
+    .titlebar.inactive {
+      background: linear-gradient(180deg, #e8e8e8 0%, #d8d8d8 50%, #d0d0d0 51%, #d8d8d8 100%);
+    }
+
+
+    .titlebar-text {
+      position: absolute;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 13px;
+      font-weight: bold;
+      color: #4a4a4a;
+      text-shadow: 0 1px 0 rgba(255,255,255,0.7);
+      pointer-events: none;
+    }
+
+    /* Toolbar */
+    .toolbar {
+      background: linear-gradient(180deg, #d6d6d6 0%, #c2c2c2 100%);
+      border-bottom: 1px solid #999;
+      padding: 6px 12px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-section {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-divider {
+      width: 1px;
+      height: 18px;
+      background: linear-gradient(180deg, transparent 0%, #999 20%, #999 80%, transparent 100%);
+      margin: 0 2px;
+    }
+
+    /* Aqua-style controls */
+    .toolbar label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: #333;
+      white-space: nowrap;
+    }
+
+    .toolbar label span.val {
+      min-width: 22px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      color: #555;
+    }
+
+    .toolbar select {
+      font-family: inherit;
+      font-size: 11px;
+      padding: 1px 4px;
+      border: 1px solid #888;
+      border-radius: 4px;
+      background: linear-gradient(180deg, #fff 0%, #e8e8e8 100%);
+      color: #333;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.08);
+      outline: none;
+    }
+
+    .toolbar select:focus {
+      border-color: #5b9bd5;
+      box-shadow: 0 0 3px rgba(59,153,252,0.5);
+    }
+
+    .toolbar input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 80px;
+      height: 12px;
+      background: transparent;
+      outline: none;
+    }
+
+    .toolbar input[type="range"]::-webkit-slider-runnable-track {
+      height: 4px;
+      border-radius: 2px;
+      background: linear-gradient(180deg, #a0a0a0, #c0c0c0);
+      border: 1px solid #888;
+      box-shadow: inset 0 1px 1px rgba(0,0,0,0.15);
+    }
+
+    .toolbar input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #fff 0%, #e0e0e0 100%);
+      border: 1px solid #888;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+      margin-top: -6px;
+      cursor: pointer;
+    }
+
+    .toolbar input[type="range"]::-webkit-slider-thumb:active {
+      background: linear-gradient(180deg, #d0e8ff 0%, #80b0e0 100%);
+      border-color: #4a90d9;
+    }
+
+    /* Aqua push button */
+    .aqua-btn {
+      font-family: inherit;
+      font-size: 12px;
+      padding: 2px 14px;
+      border-radius: 5px;
+      border: 1px solid #6e6e6e;
+      background: linear-gradient(180deg, #fff 0%, #e6e6e6 45%, #d4d4d4 55%, #dfdfdf 100%);
+      color: #333;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.12);
+      text-shadow: 0 1px 0 rgba(255,255,255,0.8);
+      outline: none;
+      height: 22px;
+      line-height: 1;
+    }
+
+    .aqua-btn:active {
+      background: linear-gradient(180deg, #b0d0ff 0%, #6aadff 45%, #4a90e2 55%, #6ab0ff 100%);
+      border-color: #3a70c0;
+      color: #fff;
+      text-shadow: 0 -1px 0 rgba(0,0,0,0.2);
+    }
+
+    .aqua-btn.blue {
+      background: linear-gradient(180deg, #a0d0ff 0%, #5aadff 45%, #3a90e2 55%, #5ab0ff 100%);
+      border-color: #2a60b0;
+      color: #fff;
+      text-shadow: 0 -1px 0 rgba(0,0,0,0.25);
+      animation: aqua-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes aqua-pulse {
+      0%, 100% { box-shadow: 0 0 4px rgba(50,140,255,0.4), 0 1px 2px rgba(0,0,0,0.12); }
+      50% { box-shadow: 0 0 8px rgba(50,140,255,0.7), 0 1px 2px rgba(0,0,0,0.12); }
+    }
+
+    .aqua-btn.blue:active {
+      background: linear-gradient(180deg, #80b0e0 0%, #3a80d0 45%, #2a70c0 55%, #4090e0 100%);
+    }
+
+    /* Content area */
+    .content {
+      background: #fff;
+      /* Pinstripe texture */
+      background-image: repeating-linear-gradient(
+        180deg,
+        transparent,
+        transparent 1px,
+        rgba(0,0,0,0.02) 1px,
+        rgba(0,0,0,0.02) 2px
+      );
+      padding: 16px;
+      flex: 1;
+    }
+
+    /* Drop zone */
+    .drop-zone {
+      border: 2px dashed #b0b0b0;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.6);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 30px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: #3a90e2;
+      background: rgba(58,144,226,0.06);
+    }
+
+    .drop-zone p {
+      color: #666;
+      font-size: 12px;
+    }
+
+    #fileInput { display: none; }
+
+    /* Canvas display */
+    .canvases {
+      display: flex;
+      gap: 16px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .canvas-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .canvas-wrapper span {
+      font-size: 10px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: bold;
+    }
+
+    canvas {
+      border-radius: 4px;
+      background: #000;
+      max-width: min(44vw, 520px);
+      border: 1px solid #999;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    }
+
+    .hidden { display: none !important; }
+
+    /* Status bar */
+    .statusbar {
+      height: 22px;
+      background: linear-gradient(180deg, #d6d6d6 0%, #c0c0c0 100%);
+      border-top: 1px solid #aaa;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      font-size: 10px;
+      color: #666;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="window">
+    <!-- Titlebar -->
+    <div class="titlebar">
+      <div class="titlebar-text">PixelFilter</div>
+    </div>
+
+    <!-- Toolbar Row 1: Layout & basic params -->
+    <div class="toolbar">
+      <div class="toolbar-section">
+        <label>Layout
+          <select id="layout">
+            <option value="rgb-stripe">RGB Stripe</option>
+            <option value="rgb-square">RGB Square</option>
+            <option value="crt">CRT TV</option>
+          </select>
+        </label>
+        <label id="phosphorLabel">Phosphor
+          <select id="phosphor">
+            <option value="shadow">Shadow Mask</option>
+            <option value="slot">Slot Mask</option>
+            <option value="grille">Aperture Grille</option>
+          </select>
+        </label>
+      </div>
+      <div class="toolbar-divider"></div>
+      <div class="toolbar-section">
+        <label>Size <input type="range" id="pixelSize" min="4" max="40" value="12"> <span class="val" id="pixelSizeVal">12</span></label>
+        <label>Gap <input type="range" id="gap" min="0" max="4" value="1" step="0.5"> <span class="val" id="gapVal">1</span></label>
+        <label>Bright <input type="range" id="brightness" min="0.5" max="3" value="1.5" step="0.1"> <span class="val" id="brightnessVal">1.5</span></label>
+        <label>Round <input type="range" id="pixelRound" min="0" max="50" value="0"> <span class="val" id="pixelRoundVal">0</span>%</label>
+      </div>
+      <div class="toolbar-divider"></div>
+      <div class="toolbar-section">
+        <label>Curve <input type="range" id="curvature" min="0" max="50" value="0"> <span class="val" id="curvatureVal">0</span></label>
+        <label>Chroma <input type="range" id="chromAb" min="0" max="20" value="0"> <span class="val" id="chromAbVal">0</span></label>
+        <label>Noise <input type="range" id="noise" min="0" max="60" value="0"> <span class="val" id="noiseVal">0</span></label>
+      </div>
+    </div>
+
+    <!-- Toolbar Row 2: Effects -->
+    <div class="toolbar" style="border-top: none;">
+      <div class="toolbar-section">
+        <label>M.Blur <input type="range" id="motionBlur" min="0" max="20" value="0"> <span class="val" id="motionBlurVal">0</span></label>
+        <label>Angle <input type="range" id="blurAngle" min="0" max="360" value="0"> <span class="val" id="blurAngleVal">0</span>&deg;</label>
+      </div>
+      <div class="toolbar-divider"></div>
+      <div class="toolbar-section">
+        <label>Backlit <input type="range" id="backlight" min="0" max="100" value="0"> <span class="val" id="backlightVal">0</span></label>
+        <label>Jitter <input type="range" id="hJitter" min="0" max="20" value="0"> <span class="val" id="hJitterVal">0</span></label>
+        <label>Dead Px <input type="range" id="deadPixels" min="0" max="50" value="0"> <span class="val" id="deadPixelsVal">0</span></label>
+      </div>
+      <div class="toolbar-divider"></div>
+      <div class="toolbar-section">
+        <label>Temp <input type="range" id="colorTemp" min="-50" max="50" value="0"> <span class="val" id="colorTempVal">0</span></label>
+        <label>Sat <input type="range" id="saturation" min="0" max="200" value="100"> <span class="val" id="saturationVal">100</span></label>
+        <label>Con <input type="range" id="contrast" min="50" max="200" value="100"> <span class="val" id="contrastVal">100</span></label>
+        <label>Vign <input type="range" id="vignette" min="0" max="100" value="0"> <span class="val" id="vignetteVal">0</span></label>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      <div class="drop-zone" id="dropZone">
+        <p>Drop an image here, paste from clipboard, or click to upload</p>
+        <button class="aqua-btn blue" id="uploadBtn">Choose Image...</button>
+        <input type="file" id="fileInput" accept="image/*">
+      </div>
+
+      <div class="canvases">
+        <div class="canvas-wrapper">
+          <span>Original</span>
+          <canvas id="original"></canvas>
+        </div>
+        <div class="canvas-wrapper">
+          <span>Filtered</span>
+          <canvas id="output"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status bar -->
+    <div class="statusbar">
+      <span id="statusText">Ready &mdash; drop or paste an image to begin</span>
+      <span style="flex:1"></span>
+      <button class="aqua-btn" id="downloadBtn" style="height:18px;font-size:10px;padding:1px 10px;">Save Image...</button>
+    </div>
+  </div>
+
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const originalCanvas = document.getElementById('original');
+    const outputCanvas = document.getElementById('output');
+    let origCtx = originalCanvas.getContext('2d');
+    let outCtx = outputCanvas.getContext('2d');
+    const statusText = document.getElementById('statusText');
+
+    const pixelSizeInput = document.getElementById('pixelSize');
+    const gapInput = document.getElementById('gap');
+    const brightnessInput = document.getElementById('brightness');
+    const layoutInput = document.getElementById('layout');
+    const phosphorInput = document.getElementById('phosphor');
+    const phosphorLabel = document.getElementById('phosphorLabel');
+    const curvatureInput = document.getElementById('curvature');
+    const chromAbInput = document.getElementById('chromAb');
+    const noiseInput = document.getElementById('noise');
+    const motionBlurInput = document.getElementById('motionBlur');
+    const blurAngleInput = document.getElementById('blurAngle');
+    const backlightInput = document.getElementById('backlight');
+    const hJitterInput = document.getElementById('hJitter');
+    const deadPixelsInput = document.getElementById('deadPixels');
+    const colorTempInput = document.getElementById('colorTemp');
+    const saturationInput = document.getElementById('saturation');
+    const contrastInput = document.getElementById('contrast');
+    const vignetteInput = document.getElementById('vignette');
+    const pixelRoundInput = document.getElementById('pixelRound');
+
+    let sourceImage = null;
+    let deadPixelMap = null;
+
+    // Paste from clipboard
+    document.addEventListener('paste', (e) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          e.preventDefault();
+          loadImage(item.getAsFile());
+          return;
+        }
+      }
+    });
+
+    // File handling
+    uploadBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      fileInput.click();
+    });
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files[0]) loadImage(e.target.files[0]);
+    });
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files[0]) loadImage(e.dataTransfer.files[0]);
+    });
+
+    function loadImage(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          sourceImage = img;
+          const maxW = Math.min(window.innerWidth * 0.42, 520);
+          const scale = Math.min(1, maxW / img.width);
+          const w = Math.round(img.width * scale);
+          const h = Math.round(img.height * scale);
+          originalCanvas.width = w;
+          originalCanvas.height = h;
+          origCtx.drawImage(img, 0, 0, w, h);
+          statusText.textContent = `${img.width} \u00d7 ${img.height} \u2014 ${file.name || 'pasted image'}`;
+          render();
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Controls
+    function bindSlider(input, valSpan) {
+      input.addEventListener('input', () => {
+        valSpan.textContent = input.value;
+        render();
+      });
+    }
+    bindSlider(pixelSizeInput, document.getElementById('pixelSizeVal'));
+    bindSlider(gapInput, document.getElementById('gapVal'));
+    bindSlider(brightnessInput, document.getElementById('brightnessVal'));
+    bindSlider(curvatureInput, document.getElementById('curvatureVal'));
+    bindSlider(chromAbInput, document.getElementById('chromAbVal'));
+    bindSlider(noiseInput, document.getElementById('noiseVal'));
+    bindSlider(motionBlurInput, document.getElementById('motionBlurVal'));
+    bindSlider(blurAngleInput, document.getElementById('blurAngleVal'));
+    bindSlider(backlightInput, document.getElementById('backlightVal'));
+    bindSlider(hJitterInput, document.getElementById('hJitterVal'));
+    bindSlider(deadPixelsInput, document.getElementById('deadPixelsVal'));
+    bindSlider(colorTempInput, document.getElementById('colorTempVal'));
+    bindSlider(saturationInput, document.getElementById('saturationVal'));
+    bindSlider(contrastInput, document.getElementById('contrastVal'));
+    bindSlider(vignetteInput, document.getElementById('vignetteVal'));
+    bindSlider(pixelRoundInput, document.getElementById('pixelRoundVal'));
+
+    layoutInput.addEventListener('change', () => {
+      phosphorLabel.classList.toggle('hidden', layoutInput.value !== 'crt');
+      render();
+    });
+    phosphorInput.addEventListener('change', render);
+    phosphorLabel.classList.toggle('hidden', layoutInput.value !== 'crt');
+
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+      if (!sourceImage) return;
+      statusText.textContent = 'Rendering full resolution...';
+
+      // Use setTimeout so the status text paints before the heavy render
+      setTimeout(() => {
+        // Create offscreen canvases at original image dimensions
+        const fullW = sourceImage.width;
+        const fullH = sourceImage.height;
+
+        const offOrig = document.createElement('canvas');
+        offOrig.width = fullW; offOrig.height = fullH;
+        const offOrigCtx = offOrig.getContext('2d');
+        offOrigCtx.drawImage(sourceImage, 0, 0, fullW, fullH);
+
+        const offOut = document.createElement('canvas');
+        offOut.width = fullW; offOut.height = fullH;
+        const offOutCtx = offOut.getContext('2d');
+
+        // Swap contexts so render functions draw to offscreen canvases
+        const savedOrigCtx = origCtx;
+        const savedOutCtx = outCtx;
+        const savedOrigCanvas = originalCanvas.width;
+        const savedOrigCanvasH = originalCanvas.height;
+        const savedOutputCanvas = outputCanvas;
+
+        origCtx = offOrigCtx;
+        outCtx = offOutCtx;
+        // Temporarily patch originalCanvas/outputCanvas references for functions that read .width/.height
+        originalCanvas.width = fullW; originalCanvas.height = fullH;
+        origCtx = offOrigCtx;
+
+        // Scale pixel size proportionally to full res
+        const displayW = savedOrigCanvas;
+        const scaleFactor = fullW / displayW;
+
+        const pixelSize = Math.round(parseInt(pixelSizeInput.value) * scaleFactor);
+        const gap = parseFloat(gapInput.value) * scaleFactor;
+        const brightness = parseFloat(brightnessInput.value);
+        const layout = layoutInput.value;
+        const noise = parseFloat(noiseInput.value);
+        const curvature = parseFloat(curvatureInput.value);
+        const chromAb = parseFloat(chromAbInput.value);
+        const phosphor = phosphorInput.value;
+        const motionBlur = Math.round(parseFloat(motionBlurInput.value) * scaleFactor);
+        const blurAngle = parseFloat(blurAngleInput.value);
+        const backlight = parseFloat(backlightInput.value);
+        const hJitter = parseFloat(hJitterInput.value) * scaleFactor;
+        const deadPixelCount = parseInt(deadPixelsInput.value);
+        const colorTemp = parseFloat(colorTempInput.value);
+        const saturation = parseFloat(saturationInput.value);
+        const contrast = parseFloat(contrastInput.value);
+        const vignette = parseFloat(vignetteInput.value);
+        const pixelRound = parseFloat(pixelRoundInput.value) / 100;
+
+        const srcData = offOrigCtx.getImageData(0, 0, fullW, fullH).data;
+
+        outCtx.fillStyle = '#000';
+        outCtx.fillRect(0, 0, fullW, fullH);
+
+        // Temporarily replace outputCanvas ref for CRT glow (drawImage(outputCanvas))
+        const realOutputCanvas = outputCanvas;
+
+        if (layout === 'rgb-stripe') {
+          renderStripe(srcData, fullW, fullH, pixelSize, gap, brightness, noise, pixelRound);
+        } else if (layout === 'rgb-square') {
+          renderSquare(srcData, fullW, fullH, pixelSize, gap, brightness, noise, pixelRound);
+        } else {
+          // CRT glow uses outCtx.drawImage(outputCanvas,...) so we need to patch it
+          outputCanvas = offOut;
+          renderCRT(srcData, fullW, fullH, pixelSize, gap, brightness, noise, phosphor);
+          outputCanvas = realOutputCanvas;
+        }
+
+        if (hJitter > 0) applyHJitter(fullW, fullH, hJitter);
+        if (motionBlur > 0) applyMotionBlur(fullW, fullH, motionBlur, blurAngle);
+        if (curvature > 0 || chromAb > 0) postProcess(fullW, fullH, curvature, chromAb);
+        if (colorTemp !== 0 || saturation !== 100 || contrast !== 100) {
+          applyColorAdjustments(fullW, fullH, colorTemp, saturation, contrast);
+        }
+        if (backlight > 0) applyBacklight(fullW, fullH, backlight);
+        if (vignette > 0) applyVignette(fullW, fullH, vignette);
+
+        const savedDeadPixelMap = deadPixelMap;
+        deadPixelMap = null;
+        if (deadPixelCount > 0) applyDeadPixels(fullW, fullH, deadPixelCount, pixelSize);
+        deadPixelMap = savedDeadPixelMap;
+
+        // Export
+        const link = document.createElement('a');
+        link.download = 'pixelfilter-output.png';
+        link.href = offOut.toDataURL('image/png');
+        link.click();
+
+        // Restore everything
+        origCtx = savedOrigCtx;
+        outCtx = savedOutCtx;
+        originalCanvas.width = savedOrigCanvas;
+        originalCanvas.height = savedOrigCanvasH;
+        origCtx.drawImage(sourceImage, 0, 0, savedOrigCanvas, savedOrigCanvasH);
+        render();
+
+        statusText.textContent = `Saved ${fullW} \u00d7 ${fullH}`;
+      }, 50);
+    });
+
+    // --- Rendering ---
+
+    function render() {
+      if (!sourceImage) return;
+
+      const pixelSize = parseInt(pixelSizeInput.value);
+      const gap = parseFloat(gapInput.value);
+      const brightness = parseFloat(brightnessInput.value);
+      const layout = layoutInput.value;
+      const noise = parseFloat(noiseInput.value);
+      const curvature = parseFloat(curvatureInput.value);
+      const chromAb = parseFloat(chromAbInput.value);
+      const phosphor = phosphorInput.value;
+      const motionBlur = parseFloat(motionBlurInput.value);
+      const blurAngle = parseFloat(blurAngleInput.value);
+      const backlight = parseFloat(backlightInput.value);
+      const hJitter = parseFloat(hJitterInput.value);
+      const deadPixelCount = parseInt(deadPixelsInput.value);
+      const colorTemp = parseFloat(colorTempInput.value);
+      const saturation = parseFloat(saturationInput.value);
+      const contrast = parseFloat(contrastInput.value);
+      const vignette = parseFloat(vignetteInput.value);
+      const pixelRound = parseFloat(pixelRoundInput.value) / 100;
+
+      const w = originalCanvas.width;
+      const h = originalCanvas.height;
+      const srcData = origCtx.getImageData(0, 0, w, h).data;
+
+      outputCanvas.width = w;
+      outputCanvas.height = h;
+
+      outCtx.fillStyle = '#000';
+      outCtx.fillRect(0, 0, w, h);
+
+      if (layout === 'rgb-stripe') {
+        renderStripe(srcData, w, h, pixelSize, gap, brightness, noise, pixelRound);
+      } else if (layout === 'rgb-square') {
+        renderSquare(srcData, w, h, pixelSize, gap, brightness, noise, pixelRound);
+      } else {
+        renderCRT(srcData, w, h, pixelSize, gap, brightness, noise, phosphor);
+      }
+
+      // Post-processing pipeline
+      if (hJitter > 0) applyHJitter(w, h, hJitter);
+      if (motionBlur > 0) applyMotionBlur(w, h, motionBlur, blurAngle);
+      if (curvature > 0 || chromAb > 0) postProcess(w, h, curvature, chromAb);
+      if (colorTemp !== 0 || saturation !== 100 || contrast !== 100) {
+        applyColorAdjustments(w, h, colorTemp, saturation, contrast);
+      }
+      if (backlight > 0) applyBacklight(w, h, backlight);
+      if (vignette > 0) applyVignette(w, h, vignette);
+      if (deadPixelCount > 0) applyDeadPixels(w, h, deadPixelCount, pixelSize);
+    }
+
+    function sampleBlock(srcData, w, x, y, bw, bh, imgW, imgH) {
+      let rSum = 0, gSum = 0, bSum = 0, count = 0;
+      for (let dy = 0; dy < bh && (y + dy) < imgH; dy++) {
+        for (let dx = 0; dx < bw && (x + dx) < imgW; dx++) {
+          const idx = ((y + dy) * w + (x + dx)) * 4;
+          rSum += srcData[idx];
+          gSum += srcData[idx + 1];
+          bSum += srcData[idx + 2];
+          count++;
+        }
+      }
+      if (count === 0) return [0, 0, 0];
+      return [rSum / count, gSum / count, bSum / count];
+    }
+
+    function applyNoise(value, noise) {
+      if (noise === 0) return value;
+      return Math.max(0, Math.min(255, value + (Math.random() - 0.5) * noise * 2));
+    }
+
+    // --- LCD RGB Stripe ---
+
+    function fillSubPixel(x, y, w, h, rad) {
+      if (rad <= 0) { outCtx.fillRect(x, y, w, h); return; }
+      outCtx.beginPath(); roundRect(outCtx, x, y, w, h, rad); outCtx.fill();
+    }
+
+    function renderStripe(srcData, w, h, pixelSize, gap, brightness, noise, pxRound) {
+      const subW = (pixelSize - gap * 2) / 3;
+      const rad = pxRound * Math.min(subW, pixelSize - gap) * 0.5;
+      for (let y = 0; y < h; y += pixelSize) {
+        for (let x = 0; x < w; x += pixelSize) {
+          const [r, g, b] = sampleBlock(srcData, w, x, y, pixelSize, pixelSize, w, h);
+          const cellH = pixelSize - gap;
+          outCtx.fillStyle = `rgb(${Math.round(applyNoise(Math.min(255, r * brightness), noise))}, 0, 0)`;
+          fillSubPixel(x, y, subW, cellH, rad);
+          outCtx.fillStyle = `rgb(0, ${Math.round(applyNoise(Math.min(255, g * brightness), noise))}, 0)`;
+          fillSubPixel(x + subW + gap, y, subW, cellH, rad);
+          outCtx.fillStyle = `rgb(0, 0, ${Math.round(applyNoise(Math.min(255, b * brightness), noise))})`;
+          fillSubPixel(x + (subW + gap) * 2, y, subW, cellH, rad);
+        }
+      }
+    }
+
+    // --- LCD RGB Square ---
+
+    function renderSquare(srcData, w, h, pixelSize, gap, brightness, noise, pxRound) {
+      const halfW = (pixelSize - gap) / 2;
+      const halfH = (pixelSize - gap) / 2;
+      const rad = pxRound * Math.min(halfW, halfH) * 0.5;
+      for (let y = 0; y < h; y += pixelSize) {
+        for (let x = 0; x < w; x += pixelSize) {
+          const [r, g, b] = sampleBlock(srcData, w, x, y, pixelSize, pixelSize, w, h);
+          outCtx.fillStyle = `rgb(${Math.round(applyNoise(Math.min(255, r * brightness), noise))}, 0, 0)`;
+          fillSubPixel(x, y, halfW, halfH, rad);
+          outCtx.fillStyle = `rgb(0, ${Math.round(applyNoise(Math.min(255, g * brightness), noise))}, 0)`;
+          fillSubPixel(x + halfW + gap, y, halfW, halfH, rad);
+          outCtx.fillStyle = `rgb(0, ${Math.round(applyNoise(Math.min(255, g * brightness), noise))}, 0)`;
+          fillSubPixel(x, y + halfH + gap, halfW, halfH, rad);
+          outCtx.fillStyle = `rgb(0, 0, ${Math.round(applyNoise(Math.min(255, b * brightness), noise))})`;
+          fillSubPixel(x + halfW + gap, y + halfH + gap, halfW, halfH, rad);
+        }
+      }
+    }
+
+    // --- CRT TV ---
+
+    function renderCRT(srcData, w, h, pixelSize, gap, brightness, noise, phosphor) {
+      const scanH = pixelSize;
+      const scanlineGap = Math.max(1, gap * 1.5);
+      if (phosphor === 'shadow') {
+        renderCRTShadowMask(srcData, w, h, pixelSize, scanH, scanlineGap, brightness, noise);
+      } else if (phosphor === 'slot') {
+        renderCRTSlotMask(srcData, w, h, pixelSize, scanH, scanlineGap, brightness, noise);
+      } else {
+        renderCRTApertureGrille(srcData, w, h, pixelSize, scanH, scanlineGap, brightness, noise);
+      }
+      outCtx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      for (let y = 0; y < h; y += scanH) {
+        outCtx.fillRect(0, y + scanH - scanlineGap, w, scanlineGap);
+      }
+      outCtx.globalCompositeOperation = 'lighter';
+      outCtx.filter = `blur(${Math.max(1, pixelSize * 0.15)}px)`;
+      outCtx.globalAlpha = 0.3;
+      outCtx.drawImage(outputCanvas, 0, 0);
+      outCtx.globalAlpha = 1;
+      outCtx.filter = 'none';
+      outCtx.globalCompositeOperation = 'source-over';
+    }
+
+    function renderCRTShadowMask(srcData, w, h, pixelSize, scanH, scanlineGap, brightness, noise) {
+      const dotW = pixelSize / 3;
+      const dotR = Math.min(dotW, scanH - scanlineGap) * 0.48;
+      for (let y = 0; y < h; y += scanH) {
+        const rowIdx = Math.floor(y / scanH);
+        const xOff = (rowIdx % 2) * (pixelSize * 0.5);
+        for (let x = -pixelSize; x < w + pixelSize; x += pixelSize) {
+          const sx = x + xOff;
+          const [r, g, b] = sampleBlock(srcData, w, Math.max(0, Math.min(w - 1, Math.round(sx))), y, pixelSize, scanH, w, h);
+          const cy = y + (scanH - scanlineGap) / 2;
+          outCtx.beginPath(); outCtx.arc(sx + dotW * 0.5, cy, dotR, 0, Math.PI * 2);
+          outCtx.fillStyle = `rgb(${Math.round(applyNoise(Math.min(255, r * brightness), noise))}, 0, 0)`; outCtx.fill();
+          outCtx.beginPath(); outCtx.arc(sx + dotW * 1.5, cy, dotR, 0, Math.PI * 2);
+          outCtx.fillStyle = `rgb(0, ${Math.round(applyNoise(Math.min(255, g * brightness), noise))}, 0)`; outCtx.fill();
+          outCtx.beginPath(); outCtx.arc(sx + dotW * 2.5, cy, dotR, 0, Math.PI * 2);
+          outCtx.fillStyle = `rgb(0, 0, ${Math.round(applyNoise(Math.min(255, b * brightness), noise))})`; outCtx.fill();
+        }
+      }
+    }
+
+    function renderCRTSlotMask(srcData, w, h, pixelSize, scanH, scanlineGap, brightness, noise) {
+      const slotW = (pixelSize - 2) / 3;
+      const slotH = scanH - scanlineGap;
+      const slotGap = 1;
+      for (let y = 0; y < h; y += scanH) {
+        const rowIdx = Math.floor(y / scanH);
+        const xOff = (rowIdx % 2) * (pixelSize * 0.5);
+        for (let x = -pixelSize; x < w + pixelSize; x += pixelSize) {
+          const sx = x + xOff;
+          const [r, g, b] = sampleBlock(srcData, w, Math.max(0, Math.min(w - 1, Math.round(sx))), y, pixelSize, scanH, w, h);
+          const ry = 2;
+          outCtx.beginPath(); roundRect(outCtx, sx, y, slotW, slotH, ry);
+          outCtx.fillStyle = `rgb(${Math.round(applyNoise(Math.min(255, r * brightness), noise))}, 0, 0)`; outCtx.fill();
+          outCtx.beginPath(); roundRect(outCtx, sx + slotW + slotGap, y, slotW, slotH, ry);
+          outCtx.fillStyle = `rgb(0, ${Math.round(applyNoise(Math.min(255, g * brightness), noise))}, 0)`; outCtx.fill();
+          outCtx.beginPath(); roundRect(outCtx, sx + (slotW + slotGap) * 2, y, slotW, slotH, ry);
+          outCtx.fillStyle = `rgb(0, 0, ${Math.round(applyNoise(Math.min(255, b * brightness), noise))})`; outCtx.fill();
+        }
+      }
+    }
+
+    function renderCRTApertureGrille(srcData, w, h, pixelSize, scanH, scanlineGap, brightness, noise) {
+      const stripeW = (pixelSize - 2) / 3;
+      const stripeGap = 1;
+      for (let y = 0; y < h; y += scanH) {
+        for (let x = 0; x < w; x += pixelSize) {
+          const [r, g, b] = sampleBlock(srcData, w, x, y, pixelSize, scanH, w, h);
+          const cellH = scanH - scanlineGap;
+          outCtx.fillStyle = `rgb(${Math.round(applyNoise(Math.min(255, r * brightness), noise))}, 0, 0)`;
+          outCtx.fillRect(x, y, stripeW, cellH);
+          outCtx.fillStyle = `rgb(0, ${Math.round(applyNoise(Math.min(255, g * brightness), noise))}, 0)`;
+          outCtx.fillRect(x + stripeW + stripeGap, y, stripeW, cellH);
+          outCtx.fillStyle = `rgb(0, 0, ${Math.round(applyNoise(Math.min(255, b * brightness), noise))})`;
+          outCtx.fillRect(x + (stripeW + stripeGap) * 2, y, stripeW, cellH);
+        }
+      }
+      outCtx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+      outCtx.fillRect(0, Math.round(h * 0.33) - 1, w, 2);
+      outCtx.fillRect(0, Math.round(h * 0.66) - 1, w, 2);
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      r = Math.min(r, w / 2, h / 2);
+      ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r); ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h); ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r); ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath();
+    }
+
+    // --- Post-processing ---
+
+    function postProcess(w, h, curvature, chromAb) {
+      const src = outCtx.getImageData(0, 0, w, h);
+      const dst = outCtx.createImageData(w, h);
+      const sd = src.data; const dd = dst.data;
+      const cx = w / 2; const cy = h / 2;
+      const k = curvature / 100; const caScale = chromAb / 800;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const dx = (x - cx) / cx; const dy = (y - cy) / cy;
+          const r2 = dx * dx + dy * dy; const r = Math.sqrt(r2);
+          const distort = 1 + k * r2; const dIdx = (y * w + x) * 4;
+          for (let c = 0; c < 3; c++) {
+            const caOffset = (c - 1) * caScale;
+            const totalDistort = distort + caOffset * r;
+            const sx = cx + dx * cx * totalDistort;
+            const sy = cy + dy * cy * totalDistort;
+            const px = Math.floor(sx); const py = Math.floor(sy);
+            if (px >= 0 && px < w - 1 && py >= 0 && py < h - 1) {
+              const fx = sx - px; const fy = sy - py;
+              const i00 = (py * w + px) * 4 + c; const i10 = (py * w + px + 1) * 4 + c;
+              const i01 = ((py + 1) * w + px) * 4 + c; const i11 = ((py + 1) * w + px + 1) * 4 + c;
+              dd[dIdx + c] = Math.round(sd[i00]*(1-fx)*(1-fy) + sd[i10]*fx*(1-fy) + sd[i01]*(1-fx)*fy + sd[i11]*fx*fy);
+            }
+          }
+          dd[dIdx + 3] = 255;
+        }
+      }
+      outCtx.putImageData(dst, 0, 0);
+    }
+
+    function applyHJitter(w, h, amount) {
+      const src = outCtx.getImageData(0, 0, w, h);
+      const dst = outCtx.createImageData(w, h);
+      const sd = src.data; const dd = dst.data;
+      for (let y = 0; y < h; y++) {
+        const shift = Math.round((Math.random() - 0.5) * amount * 2);
+        for (let x = 0; x < w; x++) {
+          const sx = x - shift; const dIdx = (y * w + x) * 4;
+          if (sx >= 0 && sx < w) {
+            const sIdx = (y * w + sx) * 4;
+            dd[dIdx] = sd[sIdx]; dd[dIdx+1] = sd[sIdx+1]; dd[dIdx+2] = sd[sIdx+2]; dd[dIdx+3] = 255;
+          }
+        }
+      }
+      outCtx.putImageData(dst, 0, 0);
+    }
+
+    function applyMotionBlur(w, h, strength, angleDeg) {
+      const src = outCtx.getImageData(0, 0, w, h);
+      const dst = outCtx.createImageData(w, h);
+      const sd = src.data; const dd = dst.data;
+      const angle = angleDeg * Math.PI / 180;
+      const dx = Math.cos(angle); const dy = Math.sin(angle);
+      const samples = Math.round(strength);
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          let rS = 0, gS = 0, bS = 0, cnt = 0;
+          for (let s = -samples; s <= samples; s++) {
+            const sx = Math.round(x + dx * s); const sy = Math.round(y + dy * s);
+            if (sx >= 0 && sx < w && sy >= 0 && sy < h) {
+              const idx = (sy * w + sx) * 4;
+              rS += sd[idx]; gS += sd[idx+1]; bS += sd[idx+2]; cnt++;
+            }
+          }
+          const dIdx = (y * w + x) * 4;
+          dd[dIdx] = Math.round(rS/cnt); dd[dIdx+1] = Math.round(gS/cnt); dd[dIdx+2] = Math.round(bS/cnt); dd[dIdx+3] = 255;
+        }
+      }
+      outCtx.putImageData(dst, 0, 0);
+    }
+
+    function applyBacklight(w, h, intensity) {
+      const t = intensity / 100;
+      outCtx.globalCompositeOperation = 'lighter';
+      const cg = outCtx.createRadialGradient(w*0.5,h*0.5,0,w*0.5,h*0.5,Math.max(w,h)*0.6);
+      cg.addColorStop(0, `rgba(200,200,220,${0.08*t})`); cg.addColorStop(1, 'rgba(0,0,0,0)');
+      outCtx.fillStyle = cg; outCtx.fillRect(0,0,w,h);
+      const spots = [[.05,.05],[.95,.05],[.05,.95],[.95,.95],[.5,.02],[.5,.98],[.02,.5],[.98,.5]];
+      for (const [px,py] of spots) {
+        const sg = outCtx.createRadialGradient(w*px,h*py,0,w*px,h*py,Math.max(w,h)*0.35);
+        sg.addColorStop(0, `rgba(180,180,200,${0.06*t})`);
+        sg.addColorStop(0.5, `rgba(120,120,150,${0.02*t})`);
+        sg.addColorStop(1, 'rgba(0,0,0,0)');
+        outCtx.fillStyle = sg; outCtx.fillRect(0,0,w,h);
+      }
+      outCtx.globalCompositeOperation = 'source-over';
+    }
+
+    function applyColorAdjustments(w, h, temp, sat, con) {
+      const img = outCtx.getImageData(0, 0, w, h); const d = img.data;
+      const tNorm = temp / 50;
+      const rShift = tNorm * 30; const gShift = tNorm * 8; const bShift = -tNorm * 30;
+      const cFactor = con / 100; const sFactor = sat / 100;
+      for (let i = 0; i < d.length; i += 4) {
+        let r = d[i] + rShift, g = d[i+1] + gShift, b = d[i+2] + bShift;
+        r = (r-128)*cFactor+128; g = (g-128)*cFactor+128; b = (b-128)*cFactor+128;
+        const lum = 0.299*r + 0.587*g + 0.114*b;
+        r = lum+(r-lum)*sFactor; g = lum+(g-lum)*sFactor; b = lum+(b-lum)*sFactor;
+        d[i] = Math.max(0,Math.min(255,Math.round(r)));
+        d[i+1] = Math.max(0,Math.min(255,Math.round(g)));
+        d[i+2] = Math.max(0,Math.min(255,Math.round(b)));
+      }
+      outCtx.putImageData(img, 0, 0);
+    }
+
+    function applyVignette(w, h, intensity) {
+      const t = intensity / 100;
+      const vg = outCtx.createRadialGradient(w/2,h/2,Math.min(w,h)*0.25,w/2,h/2,Math.max(w,h)*0.75);
+      vg.addColorStop(0, 'rgba(0,0,0,0)');
+      vg.addColorStop(1, `rgba(0,0,0,${0.7*t})`);
+      outCtx.fillStyle = vg; outCtx.fillRect(0,0,w,h);
+    }
+
+    function generateDeadPixelMap(w, h, count, pixelSize) {
+      const map = []; let seed = w * 7919 + h * 104729;
+      function seededRand() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+      for (let i = 0; i < 50; i++) {
+        const gx = Math.floor(seededRand() * Math.ceil(w / pixelSize));
+        const gy = Math.floor(seededRand() * Math.ceil(h / pixelSize));
+        const type = seededRand() < 0.7 ? 'off' : 'on';
+        const channel = Math.floor(seededRand() * 3);
+        map.push({ gx, gy, type, channel });
+      }
+      return map;
+    }
+
+    function applyDeadPixels(w, h, count, pixelSize) {
+      if (!deadPixelMap || deadPixelMap._w !== w || deadPixelMap._h !== h || deadPixelMap._ps !== pixelSize) {
+        deadPixelMap = generateDeadPixelMap(w, h, 50, pixelSize);
+        deadPixelMap._w = w; deadPixelMap._h = h; deadPixelMap._ps = pixelSize;
+      }
+      const active = Math.min(count, deadPixelMap.length);
+      for (let i = 0; i < active; i++) {
+        const dp = deadPixelMap[i];
+        const px = dp.gx * pixelSize; const py = dp.gy * pixelSize;
+        if (px >= w || py >= h) continue;
+        const subW = pixelSize / 3; const sx = px + dp.channel * subW;
+        if (dp.type === 'off') { outCtx.fillStyle = '#000'; }
+        else { outCtx.fillStyle = ['rgb(255,0,0)','rgb(0,255,0)','rgb(0,0,255)'][dp.channel]; }
+        outCtx.fillRect(sx, py, subW, pixelSize);
+      }
+    }
+  </script>
+</body>
+</html>
