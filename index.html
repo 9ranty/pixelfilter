@@ -88,11 +88,32 @@
       white-space: nowrap;
     }
 
-    .toolbar label span.val {
-      min-width: 22px;
+    .toolbar input[type="number"] {
+      font-family: inherit;
+      font-size: 10px;
+      width: 38px;
+      height: 16px;
+      padding: 0 3px;
+      border: 1px solid #888;
+      border-radius: 3px;
+      background: linear-gradient(180deg, #f0f0f0 0%, #fff 15%, #fff 100%);
+      color: #333;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.1), 0 1px 0 rgba(255,255,255,0.6);
+      outline: none;
       text-align: right;
       font-variant-numeric: tabular-nums;
-      color: #555;
+      -moz-appearance: textfield;
+    }
+
+    .toolbar input[type="number"]::-webkit-inner-spin-button,
+    .toolbar input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .toolbar input[type="number"]:focus {
+      border-color: #5b9bd5;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.1), 0 0 3px rgba(59,153,252,0.5);
     }
 
     .toolbar select {
@@ -264,6 +285,90 @@
 
     .hidden { display: none !important; }
 
+    .toolbar input[type="color"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 16px;
+      border: 1px solid #888;
+      border-radius: 3px;
+      padding: 0;
+      cursor: pointer;
+      background: none;
+    }
+    .toolbar input[type="color"]::-webkit-color-swatch-wrapper { padding: 1px; }
+    .toolbar input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
+
+    .toolbar input[type="text"].hex-input {
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 10px;
+      width: 56px;
+      height: 16px;
+      padding: 0 3px;
+      border: 1px solid #888;
+      border-radius: 3px;
+      background: linear-gradient(180deg, #f0f0f0 0%, #fff 15%, #fff 100%);
+      color: #333;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.1), 0 1px 0 rgba(255,255,255,0.6);
+      outline: none;
+    }
+    .toolbar input[type="text"].hex-input:focus {
+      border-color: #5b9bd5;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.1), 0 0 3px rgba(59,153,252,0.5);
+    }
+
+    .color-group {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    /* SVG pattern preview */
+    .svg-preview {
+      max-width: 100%;
+      max-height: calc(100vh - 160px);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border: 1px solid #999;
+      border-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    }
+
+    .svg-preview svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .mode-btn {
+      font-family: inherit;
+      font-size: 10px;
+      padding: 1px 10px;
+      border-radius: 3px;
+      border: 1px solid #777;
+      background: linear-gradient(180deg, #fff 0%, #e6e6e6 45%, #d4d4d4 55%, #dfdfdf 100%);
+      color: #333;
+      cursor: pointer;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.08);
+      text-shadow: 0 1px 0 rgba(255,255,255,0.8);
+      outline: none;
+      height: 18px;
+    }
+
+    .mode-btn.active {
+      background: linear-gradient(180deg, #a0d0ff 0%, #5aadff 45%, #3a90e2 55%, #5ab0ff 100%);
+      border-color: #2a60b0;
+      color: #fff;
+      text-shadow: 0 -1px 0 rgba(0,0,0,0.25);
+    }
+
+    .mode-btn:active {
+      background: linear-gradient(180deg, #80b0e0 0%, #3a80d0 45%, #2a70c0 55%, #4090e0 100%);
+    }
+
     /* Status bar */
     .statusbar {
       height: 22px;
@@ -286,8 +391,17 @@
       <div class="titlebar-text">PixelFilter</div>
     </div>
 
-    <!-- Toolbar Row 1: Layout & basic params -->
+    <!-- Toolbar Row 1: Mode, Layout, basic params -->
     <div class="toolbar">
+      <div class="toolbar-section">
+        <button class="mode-btn active" id="modeFilter">Filter</button>
+        <button class="mode-btn" id="modePattern">Pattern</button>
+      </div>
+      <div class="toolbar-section hidden" id="outputTypeSection">
+        <button class="mode-btn active" id="outputSvg">SVG</button>
+        <button class="mode-btn" id="outputPng">PNG</button>
+      </div>
+      <div class="toolbar-divider"></div>
       <div class="toolbar-section">
         <label>Layout
           <select id="layout">
@@ -306,48 +420,80 @@
       </div>
       <div class="toolbar-divider"></div>
       <div class="toolbar-section">
-        <label>Size <input type="range" id="pixelSize" min="4" max="40" value="12"> <span class="val" id="pixelSizeVal">12</span></label>
-        <label>Gap <input type="range" id="gap" min="0" max="4" value="1" step="0.5"> <span class="val" id="gapVal">1</span></label>
-        <label>Bright <input type="range" id="brightness" min="0.5" max="3" value="1.5" step="0.1"> <span class="val" id="brightnessVal">1.5</span></label>
-        <label>Round <input type="range" id="pixelRound" min="0" max="50" value="0"> <span class="val" id="pixelRoundVal">0</span>%</label>
+        <label>Size <input type="range" id="pixelSize" min="0" max="40" value="12"> <input type="number" id="pixelSizeVal" value="12" min="0" max="40"></label>
+        <label>Gap <input type="range" id="gap" min="0" max="4" value="1" step="0.5"> <input type="number" id="gapVal" value="1" min="0" max="4" step="0.5"></label>
+        <label id="brightLabel">Bright <input type="range" id="brightness" min="0.5" max="3" value="1.5" step="0.1"> <input type="number" id="brightnessVal" value="1.5" min="0.5" max="3" step="0.1"></label>
+        <label>Round <input type="range" id="pixelRound" min="0" max="50" value="0"> <input type="number" id="pixelRoundVal" value="0" min="0" max="50">%</label>
+        <label id="ratioLabel" class="hidden">Ratio
+          <select id="aspectRatio">
+            <option value="16:9">16:9</option>
+            <option value="4:3">4:3</option>
+            <option value="1:1">1:1</option>
+            <option value="3:4">3:4</option>
+            <option value="9:16">9:16</option>
+            <option value="21:9">21:9</option>
+          </select>
+        </label>
+        <label id="svgStyleLabel" class="hidden">Style
+          <select id="svgStyle">
+            <option value="filled">Filled</option>
+            <option value="outline">Outline</option>
+          </select>
+        </label>
       </div>
-      <div class="toolbar-divider"></div>
-      <div class="toolbar-section">
-        <label>Curve <input type="range" id="curvature" min="0" max="50" value="0"> <span class="val" id="curvatureVal">0</span></label>
-        <label>Chroma <input type="range" id="chromAb" min="0" max="20" value="0"> <span class="val" id="chromAbVal">0</span></label>
-        <label>Noise <input type="range" id="noise" min="0" max="60" value="0"> <span class="val" id="noiseVal">0</span></label>
+      <div class="toolbar-divider hidden" id="colorDivider"></div>
+      <div class="toolbar-section hidden" id="colorControls">
+        <label>C1 <span class="color-group"><input type="color" id="color1" value="#ff0000"><input type="text" class="hex-input" id="color1Hex" value="#ff0000"></span></label>
+        <label>C2 <span class="color-group"><input type="color" id="color2" value="#00ff00"><input type="text" class="hex-input" id="color2Hex" value="#00ff00"></span></label>
+        <label>C3 <span class="color-group"><input type="color" id="color3" value="#0000ff"><input type="text" class="hex-input" id="color3Hex" value="#0000ff"></span></label>
+        <label>Scheme
+          <select id="colorScheme">
+            <option value="custom">Custom</option>
+            <option value="random">Random</option>
+            <option value="harmonious">Harmonious</option>
+            <option value="harmonious-from">Harmonious from...</option>
+            <option value="tonal-from">Tonal from...</option>
+          </select>
+        </label>
+        <label class="hidden" id="seedColorLabel">Base <span class="color-group"><input type="color" id="seedColor" value="#ff6600"><input type="text" class="hex-input" id="seedColorHex" value="#ff6600"></span></label>
+        <button class="aqua-btn" id="generateColorsBtn" style="height:18px;font-size:10px;padding:1px 10px;">Generate</button>
+      </div>
+      <div class="toolbar-divider hidden" id="effectsDivider"></div>
+      <div class="toolbar-section hidden" id="effectsSection1">
+        <label>Curve <input type="range" id="curvature" min="0" max="50" value="0"> <input type="number" id="curvatureVal" value="0" min="0" max="50"></label>
+        <label>Chroma <input type="range" id="chromAb" min="0" max="20" value="0"> <input type="number" id="chromAbVal" value="0" min="0" max="20"></label>
+        <label>Noise <input type="range" id="noise" min="0" max="60" value="0"> <input type="number" id="noiseVal" value="0" min="0" max="60"></label>
       </div>
     </div>
 
     <!-- Toolbar Row 2: Effects -->
-    <div class="toolbar" style="border-top: none;">
+    <div class="toolbar hidden" id="effectsRow" style="border-top: none;">
       <div class="toolbar-section">
-        <label>M.Blur <input type="range" id="motionBlur" min="0" max="20" value="0"> <span class="val" id="motionBlurVal">0</span></label>
-        <label>Angle <input type="range" id="blurAngle" min="0" max="360" value="0"> <span class="val" id="blurAngleVal">0</span>&deg;</label>
+        <label>M.Blur <input type="range" id="motionBlur" min="0" max="20" value="0"> <input type="number" id="motionBlurVal" value="0" min="0" max="20"></label>
+        <label>Angle <input type="range" id="blurAngle" min="0" max="360" value="0"> <input type="number" id="blurAngleVal" value="0" min="0" max="360">&deg;</label>
       </div>
       <div class="toolbar-divider"></div>
       <div class="toolbar-section">
-        <label>Backlit <input type="range" id="backlight" min="0" max="100" value="0"> <span class="val" id="backlightVal">0</span></label>
-        <label>Jitter <input type="range" id="hJitter" min="0" max="20" value="0"> <span class="val" id="hJitterVal">0</span></label>
-        <label>Dead Px <input type="range" id="deadPixels" min="0" max="50" value="0"> <span class="val" id="deadPixelsVal">0</span></label>
+        <label>Backlit <input type="range" id="backlight" min="0" max="100" value="0"> <input type="number" id="backlightVal" value="0" min="0" max="100"></label>
+        <label>Jitter <input type="range" id="hJitter" min="0" max="20" value="0"> <input type="number" id="hJitterVal" value="0" min="0" max="20"></label>
+        <label>Dead Px <input type="range" id="deadPixels" min="0" max="50" value="0"> <input type="number" id="deadPixelsVal" value="0" min="0" max="50"></label>
       </div>
       <div class="toolbar-divider"></div>
       <div class="toolbar-section">
-        <label>Temp <input type="range" id="colorTemp" min="-50" max="50" value="0"> <span class="val" id="colorTempVal">0</span></label>
-        <label>Sat <input type="range" id="saturation" min="0" max="200" value="100"> <span class="val" id="saturationVal">100</span></label>
-        <label>Con <input type="range" id="contrast" min="50" max="200" value="100"> <span class="val" id="contrastVal">100</span></label>
-        <label>Vign <input type="range" id="vignette" min="0" max="100" value="0"> <span class="val" id="vignetteVal">0</span></label>
+        <label>Temp <input type="range" id="colorTemp" min="-50" max="50" value="0"> <input type="number" id="colorTempVal" value="0" min="-50" max="50"></label>
+        <label>Sat <input type="range" id="saturation" min="0" max="200" value="100"> <input type="number" id="saturationVal" value="100" min="0" max="200"></label>
+        <label>Con <input type="range" id="contrast" min="50" max="200" value="100"> <input type="number" id="contrastVal" value="100" min="50" max="200"></label>
+        <label>Vign <input type="range" id="vignette" min="0" max="100" value="0"> <input type="number" id="vignetteVal" value="0" min="0" max="100"></label>
       </div>
     </div>
 
-    <!-- Content -->
-    <div class="content">
+    <!-- Content: Filter -->
+    <div class="content" id="filterContent">
       <div class="drop-zone" id="dropZone">
         <p>Drop an image here, paste from clipboard, or click to upload</p>
         <button class="aqua-btn blue" id="uploadBtn">Choose Image...</button>
         <input type="file" id="fileInput" accept="image/*">
       </div>
-
       <div class="canvases">
         <div class="canvas-wrapper">
           <span>Original</span>
@@ -360,11 +506,32 @@
       </div>
     </div>
 
+    <!-- Content: Pattern SVG -->
+    <div class="content hidden" id="patternSvgContent">
+      <div class="svg-preview" id="svgPreview"></div>
+    </div>
+
+    <!-- Content: Pattern PNG -->
+    <div class="content hidden" id="patternPngContent">
+      <div style="display:flex;justify-content:center;">
+        <canvas id="patternCanvas" style="border-radius:4px;border:1px solid #999;box-shadow:0 1px 4px rgba(0,0,0,0.15);max-width:90vw;"></canvas>
+      </div>
+    </div>
+
     <!-- Status bar -->
     <div class="statusbar">
       <span id="statusText">Ready &mdash; drop or paste an image to begin</span>
       <span style="flex:1"></span>
       <button class="aqua-btn" id="downloadBtn" style="height:18px;font-size:10px;padding:1px 10px;">Save Image...</button>
+      <button class="aqua-btn hidden" id="downloadSvgBtn" style="height:18px;font-size:10px;padding:1px 10px;">Save SVG...</button>
+      <button class="aqua-btn hidden" id="downloadPngPatternBtn" style="height:18px;font-size:10px;padding:1px 10px;">Save PNG...</button>
+      <select class="hidden" id="loopDuration" style="font-size:10px;height:18px;padding:0 4px;border:1px solid #888;border-radius:3px;background:linear-gradient(180deg,#fff,#e8e8e8);margin-left:4px;">
+        <option value="2">2s</option>
+        <option value="4" selected>4s</option>
+        <option value="6">6s</option>
+        <option value="8">8s</option>
+      </select>
+      <button class="aqua-btn hidden" id="recordLoopBtn" style="height:18px;font-size:10px;padding:1px 10px;">Record Loop...</button>
     </div>
   </div>
 
@@ -373,7 +540,7 @@
     const fileInput = document.getElementById('fileInput');
     const uploadBtn = document.getElementById('uploadBtn');
     const originalCanvas = document.getElementById('original');
-    const outputCanvas = document.getElementById('output');
+    let outputCanvas = document.getElementById('output');
     let origCtx = originalCanvas.getContext('2d');
     let outCtx = outputCanvas.getContext('2d');
     const statusText = document.getElementById('statusText');
@@ -397,9 +564,47 @@
     const contrastInput = document.getElementById('contrast');
     const vignetteInput = document.getElementById('vignette');
     const pixelRoundInput = document.getElementById('pixelRound');
+    const modeFilterBtn = document.getElementById('modeFilter');
+    const modePatternBtn = document.getElementById('modePattern');
+    const outputSvgBtn = document.getElementById('outputSvg');
+    const outputPngBtn = document.getElementById('outputPng');
+    const outputTypeSection = document.getElementById('outputTypeSection');
+    const filterContent = document.getElementById('filterContent');
+    const patternSvgContent = document.getElementById('patternSvgContent');
+    const patternPngContent = document.getElementById('patternPngContent');
+    const svgPreview = document.getElementById('svgPreview');
+    const patternCanvas = document.getElementById('patternCanvas');
+    const patternCtx = patternCanvas.getContext('2d');
+    const downloadSvgBtn = document.getElementById('downloadSvgBtn');
+    const downloadPngPatternBtn = document.getElementById('downloadPngPatternBtn');
+    const recordLoopBtn = document.getElementById('recordLoopBtn');
+    const loopDurationSelect = document.getElementById('loopDuration');
+    const effectsRow = document.getElementById('effectsRow');
+    const effectsDivider = document.getElementById('effectsDivider');
+    const effectsSection1 = document.getElementById('effectsSection1');
+    const brightLabel = document.getElementById('brightLabel');
+    const ratioLabel = document.getElementById('ratioLabel');
+    const svgStyleLabel = document.getElementById('svgStyleLabel');
+    const aspectRatioInput = document.getElementById('aspectRatio');
+    const svgStyleInput = document.getElementById('svgStyle');
+    const color1Input = document.getElementById('color1');
+    const color1Hex = document.getElementById('color1Hex');
+    const color2Input = document.getElementById('color2');
+    const color2Hex = document.getElementById('color2Hex');
+    const color3Input = document.getElementById('color3');
+    const color3Hex = document.getElementById('color3Hex');
+    const colorSchemeInput = document.getElementById('colorScheme');
+    const colorControls = document.getElementById('colorControls');
+    const colorDivider = document.getElementById('colorDivider');
+    const seedColorInput = document.getElementById('seedColor');
+    const seedColorHex = document.getElementById('seedColorHex');
+    const seedColorLabel = document.getElementById('seedColorLabel');
+    const generateColorsBtn = document.getElementById('generateColorsBtn');
 
     let sourceImage = null;
     let deadPixelMap = null;
+    let currentMode = 'filter';
+    let patternOutput = 'svg'; // 'svg' or 'png'
 
     // Paste from clipboard
     document.addEventListener('paste', (e) => {
@@ -458,10 +663,20 @@
     }
 
     // Controls
-    function bindSlider(input, valSpan) {
-      input.addEventListener('input', () => {
-        valSpan.textContent = input.value;
-        render();
+    function renderAll() {
+      if (currentMode === 'filter') render();
+      else if (patternOutput === 'svg') renderSvgPattern();
+      else renderPngPattern();
+    }
+
+    function bindSlider(slider, numInput) {
+      slider.addEventListener('input', () => {
+        numInput.value = slider.value;
+        renderAll();
+      });
+      numInput.addEventListener('input', () => {
+        slider.value = numInput.value;
+        renderAll();
       });
     }
     bindSlider(pixelSizeInput, document.getElementById('pixelSizeVal'));
@@ -483,10 +698,108 @@
 
     layoutInput.addEventListener('change', () => {
       phosphorLabel.classList.toggle('hidden', layoutInput.value !== 'crt');
-      render();
+      renderAll();
     });
-    phosphorInput.addEventListener('change', render);
+    phosphorInput.addEventListener('change', renderAll);
+    aspectRatioInput.addEventListener('change', renderAll);
+    svgStyleInput.addEventListener('change', () => {
+      updateVisibility();
+      renderAll();
+    });
+
+    // Color picker <-> hex input sync
+    function bindColor(picker, hex) {
+      picker.addEventListener('input', () => { hex.value = picker.value; renderAll(); });
+      hex.addEventListener('input', () => {
+        let v = hex.value;
+        if (v.match(/^#?[0-9a-fA-F]{6}$/)) {
+          if (!v.startsWith('#')) v = '#' + v;
+          picker.value = v; hex.value = v; renderAll();
+        }
+      });
+      hex.addEventListener('blur', () => { hex.value = picker.value; });
+    }
+    bindColor(color1Input, color1Hex);
+    bindColor(color2Input, color2Hex);
+    bindColor(color3Input, color3Hex);
+    bindColor(seedColorInput, seedColorHex);
+
+    colorSchemeInput.addEventListener('change', () => {
+      const needsSeed = colorSchemeInput.value === 'harmonious-from' || colorSchemeInput.value === 'tonal-from';
+      seedColorLabel.classList.toggle('hidden', !needsSeed);
+      if (colorSchemeInput.value !== 'custom') generateColors();
+    });
+
+    generateColorsBtn.addEventListener('click', generateColors);
+
+    function hslToHex(h, s, l) {
+      h = ((h % 360) + 360) % 360;
+      s /= 100; l /= 100;
+      const a = s * Math.min(l, 1 - l);
+      const f = n => {
+        const k = (n + h / 30) % 12;
+        const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+        return Math.round(255 * color).toString(16).padStart(2, '0');
+      };
+      return `#${f(0)}${f(8)}${f(4)}`;
+    }
+
+    function hexToHsl(hex) {
+      let r = parseInt(hex.slice(1, 3), 16) / 255;
+      let g = parseInt(hex.slice(3, 5), 16) / 255;
+      let b = parseInt(hex.slice(5, 7), 16) / 255;
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      let h, s, l = (max + min) / 2;
+      if (max === min) { h = s = 0; }
+      else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) * 60;
+        else if (max === g) h = ((b - r) / d + 2) * 60;
+        else h = ((r - g) / d + 4) * 60;
+      }
+      return [h, s * 100, l * 100];
+    }
+
+    function setColors(c1, c2, c3) {
+      color1Input.value = c1; color1Hex.value = c1;
+      color2Input.value = c2; color2Hex.value = c2;
+      color3Input.value = c3; color3Hex.value = c3;
+      renderAll();
+    }
+
+    function generateColors() {
+      const scheme = colorSchemeInput.value;
+      if (scheme === 'random') {
+        const rand = () => '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+        setColors(rand(), rand(), rand());
+      } else if (scheme === 'harmonious') {
+        const baseH = Math.random() * 360;
+        const s = 60 + Math.random() * 30;
+        const l = 45 + Math.random() * 15;
+        setColors(
+          hslToHex(baseH, s, l),
+          hslToHex(baseH + 120, s, l),
+          hslToHex(baseH + 240, s, l)
+        );
+      } else if (scheme === 'harmonious-from') {
+        const [h, s, l] = hexToHsl(seedColorInput.value);
+        setColors(
+          seedColorInput.value,
+          hslToHex(h + 120, s, l),
+          hslToHex(h + 240, s, l)
+        );
+      } else if (scheme === 'tonal-from') {
+        const [h, s, l] = hexToHsl(seedColorInput.value);
+        setColors(
+          hslToHex(h, s, Math.max(15, l - 20)),
+          seedColorInput.value,
+          hslToHex(h, s, Math.min(85, l + 20))
+        );
+      }
+    }
     phosphorLabel.classList.toggle('hidden', layoutInput.value !== 'crt');
+    updateVisibility();
 
     document.getElementById('downloadBtn').addEventListener('click', () => {
       if (!sourceImage) return;
@@ -562,6 +875,11 @@
           outputCanvas = realOutputCanvas;
         }
 
+        const savedDeadPixelMap = deadPixelMap;
+        deadPixelMap = null;
+        if (deadPixelCount > 0) applyDeadPixels(fullW, fullH, deadPixelCount, pixelSize);
+        deadPixelMap = savedDeadPixelMap;
+
         if (hJitter > 0) applyHJitter(fullW, fullH, hJitter);
         if (motionBlur > 0) applyMotionBlur(fullW, fullH, motionBlur, blurAngle);
         if (curvature > 0 || chromAb > 0) postProcess(fullW, fullH, curvature, chromAb);
@@ -570,11 +888,6 @@
         }
         if (backlight > 0) applyBacklight(fullW, fullH, backlight);
         if (vignette > 0) applyVignette(fullW, fullH, vignette);
-
-        const savedDeadPixelMap = deadPixelMap;
-        deadPixelMap = null;
-        if (deadPixelCount > 0) applyDeadPixels(fullW, fullH, deadPixelCount, pixelSize);
-        deadPixelMap = savedDeadPixelMap;
 
         // Export
         const link = document.createElement('a');
@@ -593,6 +906,537 @@
         statusText.textContent = `Saved ${fullW} \u00d7 ${fullH}`;
       }, 50);
     });
+
+    // --- Mode switching ---
+
+    function updateVisibility() {
+      const isFilter = currentMode === 'filter';
+      const isPattern = currentMode === 'pattern';
+      const isSvg = patternOutput === 'svg';
+      const isPng = patternOutput === 'png';
+      const showEffects = isFilter || (isPattern && isPng);
+      const showColors = isPattern && !(isSvg && svgStyleInput.value === 'outline');
+
+      modeFilterBtn.classList.toggle('active', isFilter);
+      modePatternBtn.classList.toggle('active', isPattern);
+      outputSvgBtn.classList.toggle('active', isSvg);
+      outputPngBtn.classList.toggle('active', isPng);
+
+      outputTypeSection.classList.toggle('hidden', !isPattern);
+      filterContent.classList.toggle('hidden', !isFilter);
+      patternSvgContent.classList.toggle('hidden', !(isPattern && isSvg));
+      patternPngContent.classList.toggle('hidden', !(isPattern && isPng));
+
+      downloadBtn.classList.toggle('hidden', !isFilter);
+      downloadSvgBtn.classList.toggle('hidden', !(isPattern && isSvg));
+      downloadPngPatternBtn.classList.toggle('hidden', !(isPattern && isPng));
+      recordLoopBtn.classList.toggle('hidden', !(isPattern && isPng));
+      loopDurationSelect.classList.toggle('hidden', !(isPattern && isPng));
+
+      brightLabel.classList.toggle('hidden', isPattern && isSvg);
+      ratioLabel.classList.toggle('hidden', !isPattern);
+      svgStyleLabel.classList.toggle('hidden', !(isPattern && isSvg));
+
+      colorControls.classList.toggle('hidden', !showColors);
+      colorDivider.classList.toggle('hidden', !showColors);
+
+      effectsDivider.classList.toggle('hidden', !showEffects);
+      effectsSection1.classList.toggle('hidden', !showEffects);
+      effectsRow.classList.toggle('hidden', !showEffects);
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      updateVisibility();
+      if (mode === 'pattern') {
+        if (patternOutput === 'svg') renderSvgPattern();
+        else renderPngPattern();
+      }
+    }
+
+    function setPatternOutput(type) {
+      patternOutput = type;
+      updateVisibility();
+      if (type === 'svg') renderSvgPattern();
+      else renderPngPattern();
+    }
+
+    modeFilterBtn.addEventListener('click', () => setMode('filter'));
+    modePatternBtn.addEventListener('click', () => setMode('pattern'));
+    outputSvgBtn.addEventListener('click', () => setPatternOutput('svg'));
+    outputPngBtn.addEventListener('click', () => setPatternOutput('png'));
+
+    downloadPngPatternBtn.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = 'pixelfilter-pattern.png';
+      link.href = patternCanvas.toDataURL('image/png');
+      link.click();
+    });
+
+    downloadSvgBtn.addEventListener('click', () => {
+      const svg = svgPreview.innerHTML;
+      if (!svg) return;
+      const blob = new Blob([svg], { type: 'image/svg+xml' });
+      const link = document.createElement('a');
+      link.download = 'pixelfilter-pattern.svg';
+      link.href = URL.createObjectURL(blob);
+      link.click();
+      URL.revokeObjectURL(link.href);
+    });
+
+    // --- SVG Pattern Generation ---
+
+    function renderSvgPattern() {
+      const pixelSize = Math.max(1, parseInt(pixelSizeInput.value));
+      const gap = parseFloat(gapInput.value);
+      const round = parseFloat(pixelRoundInput.value) / 100;
+      const layout = layoutInput.value;
+      const phosphor = phosphorInput.value;
+      const outline = svgStyleInput.value === 'outline';
+      const colors = [color1Input.value, color2Input.value, color3Input.value];
+
+      // Parse aspect ratio
+      const [aw, ah] = aspectRatioInput.value.split(':').map(Number);
+      const baseSize = 800;
+      const svgW = aw >= ah ? baseSize : Math.round(baseSize * aw / ah);
+      const svgH = ah >= aw ? baseSize : Math.round(baseSize * ah / aw);
+
+      let tileW, tileH, makeTile;
+
+      if (layout === 'rgb-stripe') {
+        ({ tileW, tileH, makeTile } = svgStripePattern(pixelSize, gap, round, outline, colors));
+      } else if (layout === 'rgb-square') {
+        ({ tileW, tileH, makeTile } = svgSquarePattern(pixelSize, gap, round, outline, colors));
+      } else if (phosphor === 'shadow') {
+        ({ tileW, tileH, makeTile } = svgShadowMaskPattern(pixelSize, gap, outline, colors));
+      } else if (phosphor === 'slot') {
+        ({ tileW, tileH, makeTile } = svgSlotMaskPattern(pixelSize, gap, outline, colors));
+      } else {
+        ({ tileW, tileH, makeTile } = svgApertureGrillePattern(pixelSize, gap, outline, colors));
+      }
+
+      // Stamp out tiles across the full canvas
+      const bg = outline ? 'white' : 'black';
+      const shapes = [];
+      for (let ty = -tileH; ty < svgH + tileH; ty += tileH) {
+        for (let tx = -tileW; tx < svgW + tileW; tx += tileW) {
+          shapes.push(makeTile(tx, ty));
+        }
+      }
+
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}">
+  <rect width="${svgW}" height="${svgH}" fill="${bg}"/>
+  ${shapes.join('\n  ')}
+</svg>`;
+
+      svgPreview.style.aspectRatio = `${aw} / ${ah}`;
+      svgPreview.innerHTML = svg;
+      statusText.textContent = `SVG Pattern \u2014 ${layout}${layout === 'crt' ? ' / ' + phosphor : ''} \u2014 ${svgW}\u00d7${svgH} \u2014 tile: ${tileW}\u00d7${tileH}px`;
+    }
+
+    // Shape helpers for filled vs outline
+    function svgRect(ox, oy, x, y, w, h, rx, color, outline, sw) {
+      if (outline) return `<rect x="${ox+x}" y="${oy+y}" width="${w}" height="${h}" rx="${rx}" fill="none" stroke="black" stroke-width="${sw}"/>`;
+      return `<rect x="${ox+x}" y="${oy+y}" width="${w}" height="${h}" rx="${rx}" fill="${color}"/>`;
+    }
+    function svgCircle(ox, oy, cx, cy, r, color, outline, sw) {
+      if (outline) return `<circle cx="${ox+cx}" cy="${oy+cy}" r="${r}" fill="none" stroke="black" stroke-width="${sw}"/>`;
+      return `<circle cx="${ox+cx}" cy="${oy+cy}" r="${r}" fill="${color}"/>`;
+    }
+
+    function svgStripePattern(ps, gap, round, outline, colors) {
+      const [c1, c2, c3] = colors;
+      const subW = (ps - gap * 2) / 3;
+      const cellH = ps - gap;
+      const r = round * Math.min(subW, cellH) * 0.5;
+      const sw = Math.max(0.3, ps * 0.04);
+      return { tileW: ps, tileH: ps, makeTile(ox, oy) {
+        return [
+          svgRect(ox, oy, 0, 0, subW, cellH, r, c1, outline, sw),
+          svgRect(ox, oy, subW + gap, 0, subW, cellH, r, c2, outline, sw),
+          svgRect(ox, oy, (subW + gap) * 2, 0, subW, cellH, r, c3, outline, sw),
+        ].join('');
+      }};
+    }
+
+    function svgSquarePattern(ps, gap, round, outline, colors) {
+      const [c1, c2, c3] = colors;
+      const halfW = (ps - gap) / 2;
+      const halfH = (ps - gap) / 2;
+      const r = round * Math.min(halfW, halfH) * 0.5;
+      const sw = Math.max(0.3, ps * 0.04);
+      return { tileW: ps, tileH: ps, makeTile(ox, oy) {
+        return [
+          svgRect(ox, oy, 0, 0, halfW, halfH, r, c1, outline, sw),
+          svgRect(ox, oy, halfW + gap, 0, halfW, halfH, r, c2, outline, sw),
+          svgRect(ox, oy, 0, halfH + gap, halfW, halfH, r, c2, outline, sw),
+          svgRect(ox, oy, halfW + gap, halfH + gap, halfW, halfH, r, c3, outline, sw),
+        ].join('');
+      }};
+    }
+
+    function svgShadowMaskPattern(ps, gap, outline, colors) {
+      const [c1, c2, c3] = colors;
+      const scanlineGap = Math.max(1, gap * 1.5);
+      const dotW = ps / 3;
+      const dotR = Math.min(dotW, ps - scanlineGap) * 0.48;
+      const cy = (ps - scanlineGap) / 2;
+      const sw = Math.max(0.3, ps * 0.04);
+      return { tileW: ps, tileH: ps * 2, makeTile(ox, oy) {
+        const parts = [
+          svgCircle(ox, oy, dotW * 0.5, cy, dotR, c1, outline, sw),
+          svgCircle(ox, oy, dotW * 1.5, cy, dotR, c2, outline, sw),
+          svgCircle(ox, oy, dotW * 2.5, cy, dotR, c3, outline, sw),
+          svgCircle(ox, oy, dotW * 0.5 + ps * 0.5, ps + cy, dotR, c1, outline, sw),
+          svgCircle(ox, oy, dotW * 1.5 + ps * 0.5, ps + cy, dotR, c2, outline, sw),
+          svgCircle(ox, oy, dotW * 2.5 + ps * 0.5, ps + cy, dotR, c3, outline, sw),
+          svgCircle(ox, oy, dotW * 0.5 + ps * 0.5 - ps, ps + cy, dotR, c1, outline, sw),
+          svgCircle(ox, oy, dotW * 2.5 + ps * 0.5 - ps, ps + cy, dotR, c3, outline, sw),
+        ];
+        if (!outline) {
+          parts.push(`<rect x="${ox}" y="${oy + ps - scanlineGap}" width="${ps}" height="${scanlineGap}" fill="rgba(0,0,0,0.5)"/>`);
+          parts.push(`<rect x="${ox}" y="${oy + ps * 2 - scanlineGap}" width="${ps}" height="${scanlineGap}" fill="rgba(0,0,0,0.5)"/>`);
+        }
+        return parts.join('');
+      }};
+    }
+
+    function svgSlotMaskPattern(ps, gap, outline, colors) {
+      const [c1, c2, c3] = colors;
+      const scanlineGap = Math.max(1, gap * 1.5);
+      const slotW = (ps - 2) / 3;
+      const slotH = ps - scanlineGap;
+      const slotGap = 1;
+      const ry = 2;
+      const sw = Math.max(0.3, ps * 0.04);
+      return { tileW: ps, tileH: ps * 2, makeTile(ox, oy) {
+        const parts = [
+          svgRect(ox, oy, 0, 0, slotW, slotH, ry, c1, outline, sw),
+          svgRect(ox, oy, slotW + slotGap, 0, slotW, slotH, ry, c2, outline, sw),
+          svgRect(ox, oy, (slotW + slotGap) * 2, 0, slotW, slotH, ry, c3, outline, sw),
+          svgRect(ox, oy, ps * 0.5, ps, slotW, slotH, ry, c1, outline, sw),
+          svgRect(ox, oy, ps * 0.5 + slotW + slotGap, ps, slotW, slotH, ry, c2, outline, sw),
+          svgRect(ox, oy, ps * 0.5 + (slotW + slotGap) * 2, ps, slotW, slotH, ry, c3, outline, sw),
+          svgRect(ox, oy, ps * 0.5 - ps, ps, slotW, slotH, ry, c1, outline, sw),
+        ];
+        if (!outline) {
+          parts.push(`<rect x="${ox}" y="${oy + ps - scanlineGap}" width="${ps}" height="${scanlineGap}" fill="rgba(0,0,0,0.5)"/>`);
+          parts.push(`<rect x="${ox}" y="${oy + ps * 2 - scanlineGap}" width="${ps}" height="${scanlineGap}" fill="rgba(0,0,0,0.5)"/>`);
+        }
+        return parts.join('');
+      }};
+    }
+
+    function svgApertureGrillePattern(ps, gap, outline, colors) {
+      const [c1, c2, c3] = colors;
+      const scanlineGap = Math.max(1, gap * 1.5);
+      const stripeW = (ps - 2) / 3;
+      const stripeGap = 1;
+      const cellH = ps - scanlineGap;
+      const sw = Math.max(0.3, ps * 0.04);
+      return { tileW: ps, tileH: ps, makeTile(ox, oy) {
+        const parts = [
+          svgRect(ox, oy, 0, 0, stripeW, cellH, 0, c1, outline, sw),
+          svgRect(ox, oy, stripeW + stripeGap, 0, stripeW, cellH, 0, c2, outline, sw),
+          svgRect(ox, oy, (stripeW + stripeGap) * 2, 0, stripeW, cellH, 0, c3, outline, sw),
+        ];
+        if (!outline) {
+          parts.push(`<rect x="${ox}" y="${oy + cellH}" width="${ps}" height="${scanlineGap}" fill="rgba(0,0,0,0.5)"/>`);
+        }
+        return parts.join('');
+      }};
+    }
+
+    // --- PNG Pattern Rendering ---
+
+    function parseHexColor(hex) {
+      return [
+        parseInt(hex.slice(1, 3), 16),
+        parseInt(hex.slice(3, 5), 16),
+        parseInt(hex.slice(5, 7), 16),
+      ];
+    }
+
+    function renderPngPattern(effectOverrides) {
+      const pixelSize = Math.max(1, parseInt(pixelSizeInput.value));
+      const gap = parseFloat(gapInput.value);
+      const brightness = parseFloat(brightnessInput.value);
+      const noise = parseFloat(noiseInput.value);
+      const pixelRound = parseFloat(pixelRoundInput.value) / 100;
+      const layout = layoutInput.value;
+      const phosphor = phosphorInput.value;
+      const colors = [color1Input.value, color2Input.value, color3Input.value].map(parseHexColor);
+
+      const [aw, ah] = aspectRatioInput.value.split(':').map(Number);
+      const baseSize = 800;
+      const w = aw >= ah ? baseSize : Math.round(baseSize * aw / ah);
+      const h = ah >= aw ? baseSize : Math.round(baseSize * ah / aw);
+
+      patternCanvas.width = w;
+      patternCanvas.height = h;
+
+      const savedOutCtx = outCtx;
+      const savedOutputCanvas = outputCanvas;
+      outCtx = patternCtx;
+      outputCanvas = patternCanvas;
+
+      outCtx.fillStyle = '#000';
+      outCtx.fillRect(0, 0, w, h);
+
+      if (layout === 'rgb-stripe') {
+        renderPatternStripe(w, h, pixelSize, gap, brightness, noise, pixelRound, colors);
+      } else if (layout === 'rgb-square') {
+        renderPatternSquare(w, h, pixelSize, gap, brightness, noise, pixelRound, colors);
+      } else {
+        renderPatternCRT(w, h, pixelSize, gap, brightness, noise, phosphor, colors);
+      }
+
+      // Read effects from overrides or inputs
+      const fx = effectOverrides || {};
+      const motionBlur = fx.motionBlur ?? parseFloat(motionBlurInput.value);
+      const blurAngle = fx.blurAngle ?? parseFloat(blurAngleInput.value);
+      const backlight = fx.backlight ?? parseFloat(backlightInput.value);
+      const hJitter = fx.hJitter ?? parseFloat(hJitterInput.value);
+      const deadPixelCount = fx.deadPixels ?? parseInt(deadPixelsInput.value);
+      const colorTemp = fx.colorTemp ?? parseFloat(colorTempInput.value);
+      const saturation = fx.saturation ?? parseFloat(saturationInput.value);
+      const contrast = fx.contrast ?? parseFloat(contrastInput.value);
+      const vignette = fx.vignette ?? parseFloat(vignetteInput.value);
+      const curvature = parseFloat(curvatureInput.value);
+      const chromAb = parseFloat(chromAbInput.value);
+
+      if (deadPixelCount > 0) applyDeadPixels(w, h, deadPixelCount, pixelSize);
+      if (hJitter > 0) applyHJitter(w, h, hJitter);
+      if (motionBlur > 0) applyMotionBlur(w, h, motionBlur, blurAngle);
+      if (curvature > 0 || chromAb > 0) postProcess(w, h, curvature, chromAb);
+      if (colorTemp !== 0 || saturation !== 100 || contrast !== 100) {
+        applyColorAdjustments(w, h, colorTemp, saturation, contrast);
+      }
+      if (backlight > 0) applyBacklight(w, h, backlight);
+      if (vignette > 0) applyVignette(w, h, vignette);
+
+      outCtx = savedOutCtx;
+      outputCanvas = savedOutputCanvas;
+
+      if (!effectOverrides) statusText.textContent = `PNG Pattern \u2014 ${w}\u00d7${h}`;
+    }
+
+    // --- Loop Recorder ---
+
+    recordLoopBtn.addEventListener('click', () => {
+      const duration = parseFloat(loopDurationSelect.value);
+      const fps = 24;
+      const totalFrames = Math.round(duration * fps);
+      let frame = 0;
+      let recording = true;
+
+      recordLoopBtn.disabled = true;
+      recordLoopBtn.textContent = 'Recording...';
+
+      // Capture base values for each animatable effect
+      const base = {
+        motionBlur: parseFloat(motionBlurInput.value),
+        blurAngle: parseFloat(blurAngleInput.value),
+        backlight: parseFloat(backlightInput.value),
+        hJitter: parseFloat(hJitterInput.value),
+        deadPixels: parseInt(deadPixelsInput.value),
+        colorTemp: parseFloat(colorTempInput.value),
+        saturation: parseFloat(saturationInput.value),
+        contrast: parseFloat(contrastInput.value),
+        vignette: parseFloat(vignetteInput.value),
+      };
+
+      // Oscillation config: [amplitude, frequency multiplier, phase offset]
+      // amplitude is relative to the parameter's range
+      const osc = {
+        motionBlur:  { amp: Math.max(2, base.motionBlur * 0.3), freq: 1, phase: 0 },
+        blurAngle:   { amp: 15, freq: 0.7, phase: 0.5 },
+        backlight:   { amp: Math.max(8, base.backlight * 0.2), freq: 1.3, phase: 0.2 },
+        hJitter:     { amp: Math.max(1, base.hJitter * 0.4), freq: 2.1, phase: 0.7 },
+        deadPixels:  { amp: Math.max(2, base.deadPixels * 0.3), freq: 0.5, phase: 0.9 },
+        colorTemp:   { amp: 8, freq: 0.8, phase: 0.3 },
+        saturation:  { amp: 15, freq: 1.1, phase: 0.6 },
+        contrast:    { amp: 10, freq: 0.9, phase: 0.1 },
+        vignette:    { amp: Math.max(5, base.vignette * 0.2), freq: 1.4, phase: 0.4 },
+      };
+
+      function oscillate(key, t) {
+        const { amp, freq, phase } = osc[key];
+        const v = base[key] + Math.sin((t * freq + phase) * Math.PI * 2) * amp;
+        return v;
+      }
+
+      // Clamp helpers per parameter
+      const clamps = {
+        motionBlur: [0, 20], blurAngle: [0, 360], backlight: [0, 100],
+        hJitter: [0, 20], deadPixels: [0, 50], colorTemp: [-50, 50],
+        saturation: [0, 200], contrast: [50, 200], vignette: [0, 100],
+      };
+      function clampedOsc(key, t) {
+        const [lo, hi] = clamps[key];
+        return Math.max(lo, Math.min(hi, oscillate(key, t)));
+      }
+
+      const stream = patternCanvas.captureStream(0);
+      const chunks = [];
+      const recorder = new MediaRecorder(stream, {
+        mimeType: 'video/webm;codecs=vp9',
+        videoBitsPerSecond: 8000000
+      });
+      recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        const link = document.createElement('a');
+        link.download = 'pixelfilter-loop.webm';
+        link.href = URL.createObjectURL(blob);
+        link.click();
+        URL.revokeObjectURL(link.href);
+        recordLoopBtn.disabled = false;
+        recordLoopBtn.textContent = 'Record Loop...';
+        statusText.textContent = `Saved ${totalFrames} frames \u2014 ${duration}s loop`;
+      };
+      recorder.start();
+
+      function renderFrame() {
+        if (frame >= totalFrames) {
+          recorder.stop();
+          return;
+        }
+
+        const t = frame / totalFrames; // 0..1 for one full loop
+        statusText.textContent = `Recording frame ${frame + 1} / ${totalFrames}...`;
+
+        const overrides = {};
+        for (const key of Object.keys(base)) {
+          overrides[key] = key === 'deadPixels'
+            ? Math.round(clampedOsc(key, t))
+            : clampedOsc(key, t);
+        }
+
+        renderPngPattern(overrides);
+
+        // Signal a new frame to the recorder
+        const track = stream.getVideoTracks()[0];
+        if (track.requestFrame) track.requestFrame();
+
+        frame++;
+        // Use setTimeout to yield to the browser between frames
+        setTimeout(renderFrame, 0);
+      }
+
+      renderFrame();
+    });
+
+    function renderPatternStripe(w, h, ps, gap, brightness, noise, pxRound, colors) {
+      const subW = (ps - gap * 2) / 3;
+      const cellH = ps - gap;
+      const rad = pxRound * Math.min(subW, cellH) * 0.5;
+      for (let y = 0; y < h; y += ps) {
+        for (let x = 0; x < w; x += ps) {
+          for (let c = 0; c < 3; c++) {
+            const [cr, cg, cb] = colors[c];
+            const r = applyNoise(Math.min(255, cr * brightness), noise);
+            const g = applyNoise(Math.min(255, cg * brightness), noise);
+            const b = applyNoise(Math.min(255, cb * brightness), noise);
+            outCtx.fillStyle = `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
+            fillSubPixel(x + (subW + gap) * c, y, subW, cellH, rad);
+          }
+        }
+      }
+    }
+
+    function renderPatternSquare(w, h, ps, gap, brightness, noise, pxRound, colors) {
+      const halfW = (ps - gap) / 2;
+      const halfH = (ps - gap) / 2;
+      const rad = pxRound * Math.min(halfW, halfH) * 0.5;
+      const positions = [[0, 0, 0], [1, halfW + gap, 0], [1, 0, halfH + gap], [2, halfW + gap, halfH + gap]];
+      for (let y = 0; y < h; y += ps) {
+        for (let x = 0; x < w; x += ps) {
+          for (const [ci, dx, dy] of positions) {
+            const [cr, cg, cb] = colors[ci];
+            const r = applyNoise(Math.min(255, cr * brightness), noise);
+            const g = applyNoise(Math.min(255, cg * brightness), noise);
+            const b = applyNoise(Math.min(255, cb * brightness), noise);
+            outCtx.fillStyle = `rgb(${Math.round(r)},${Math.round(g)},${Math.round(b)})`;
+            fillSubPixel(x + dx, y + dy, halfW, halfH, rad);
+          }
+        }
+      }
+    }
+
+    function renderPatternCRT(w, h, ps, gap, brightness, noise, phosphor, colors) {
+      const scanH = ps;
+      const scanlineGap = Math.max(1, gap * 1.5);
+
+      if (phosphor === 'shadow') {
+        const dotW = ps / 3;
+        const dotR = Math.min(dotW, scanH - scanlineGap) * 0.48;
+        for (let y = 0; y < h; y += scanH) {
+          const rowIdx = Math.floor(y / scanH);
+          const xOff = (rowIdx % 2) * (ps * 0.5);
+          for (let x = -ps; x < w + ps; x += ps) {
+            const sx = x + xOff;
+            const cy = y + (scanH - scanlineGap) / 2;
+            for (let c = 0; c < 3; c++) {
+              const [cr, cg, cb] = colors[c];
+              outCtx.beginPath();
+              outCtx.arc(sx + dotW * (c + 0.5), cy, dotR, 0, Math.PI * 2);
+              outCtx.fillStyle = `rgb(${Math.round(applyNoise(Math.min(255, cr * brightness), noise))},${Math.round(applyNoise(Math.min(255, cg * brightness), noise))},${Math.round(applyNoise(Math.min(255, cb * brightness), noise))})`;
+              outCtx.fill();
+            }
+          }
+        }
+      } else if (phosphor === 'slot') {
+        const slotW = (ps - 2) / 3;
+        const slotH = scanH - scanlineGap;
+        const slotGap = 1;
+        for (let y = 0; y < h; y += scanH) {
+          const rowIdx = Math.floor(y / scanH);
+          const xOff = (rowIdx % 2) * (ps * 0.5);
+          for (let x = -ps; x < w + ps; x += ps) {
+            const sx = x + xOff;
+            for (let c = 0; c < 3; c++) {
+              const [cr, cg, cb] = colors[c];
+              outCtx.beginPath();
+              roundRect(outCtx, sx + (slotW + slotGap) * c, y, slotW, slotH, 2);
+              outCtx.fillStyle = `rgb(${Math.round(applyNoise(Math.min(255, cr * brightness), noise))},${Math.round(applyNoise(Math.min(255, cg * brightness), noise))},${Math.round(applyNoise(Math.min(255, cb * brightness), noise))})`;
+              outCtx.fill();
+            }
+          }
+        }
+      } else {
+        const stripeW = (ps - 2) / 3;
+        const stripeGap = 1;
+        const cellH = scanH - scanlineGap;
+        for (let y = 0; y < h; y += scanH) {
+          for (let x = 0; x < w; x += ps) {
+            for (let c = 0; c < 3; c++) {
+              const [cr, cg, cb] = colors[c];
+              outCtx.fillStyle = `rgb(${Math.round(applyNoise(Math.min(255, cr * brightness), noise))},${Math.round(applyNoise(Math.min(255, cg * brightness), noise))},${Math.round(applyNoise(Math.min(255, cb * brightness), noise))})`;
+              outCtx.fillRect(x + (stripeW + stripeGap) * c, y, stripeW, cellH);
+            }
+          }
+        }
+        outCtx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+        outCtx.fillRect(0, Math.round(h * 0.33) - 1, w, 2);
+        outCtx.fillRect(0, Math.round(h * 0.66) - 1, w, 2);
+      }
+
+      // Scanlines
+      outCtx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      for (let y = 0; y < h; y += scanH) {
+        outCtx.fillRect(0, y + scanH - scanlineGap, w, scanlineGap);
+      }
+
+      // Phosphor glow
+      outCtx.globalCompositeOperation = 'lighter';
+      outCtx.filter = `blur(${Math.max(1, ps * 0.15)}px)`;
+      outCtx.globalAlpha = 0.3;
+      outCtx.drawImage(outputCanvas, 0, 0);
+      outCtx.globalAlpha = 1;
+      outCtx.filter = 'none';
+      outCtx.globalCompositeOperation = 'source-over';
+    }
 
     // --- Rendering ---
 
@@ -628,7 +1472,9 @@
       outCtx.fillStyle = '#000';
       outCtx.fillRect(0, 0, w, h);
 
-      if (layout === 'rgb-stripe') {
+      if (pixelSize < 1) {
+        outCtx.drawImage(originalCanvas, 0, 0);
+      } else if (layout === 'rgb-stripe') {
         renderStripe(srcData, w, h, pixelSize, gap, brightness, noise, pixelRound);
       } else if (layout === 'rgb-square') {
         renderSquare(srcData, w, h, pixelSize, gap, brightness, noise, pixelRound);
@@ -637,6 +1483,7 @@
       }
 
       // Post-processing pipeline
+      if (deadPixelCount > 0) applyDeadPixels(w, h, deadPixelCount, pixelSize);
       if (hJitter > 0) applyHJitter(w, h, hJitter);
       if (motionBlur > 0) applyMotionBlur(w, h, motionBlur, blurAngle);
       if (curvature > 0 || chromAb > 0) postProcess(w, h, curvature, chromAb);
@@ -645,7 +1492,6 @@
       }
       if (backlight > 0) applyBacklight(w, h, backlight);
       if (vignette > 0) applyVignette(w, h, vignette);
-      if (deadPixelCount > 0) applyDeadPixels(w, h, deadPixelCount, pixelSize);
     }
 
     function sampleBlock(srcData, w, x, y, bw, bh, imgW, imgH) {
@@ -942,14 +1788,55 @@
         deadPixelMap._w = w; deadPixelMap._h = h; deadPixelMap._ps = pixelSize;
       }
       const active = Math.min(count, deadPixelMap.length);
+      const layout = layoutInput.value;
+      const gap = parseFloat(gapInput.value);
+      const pxRound = parseFloat(pixelRoundInput.value) / 100;
+      const phosphor = phosphorInput.value;
+
       for (let i = 0; i < active; i++) {
         const dp = deadPixelMap[i];
-        const px = dp.gx * pixelSize; const py = dp.gy * pixelSize;
+        const px = dp.gx * pixelSize;
+        const py = dp.gy * pixelSize;
         if (px >= w || py >= h) continue;
-        const subW = pixelSize / 3; const sx = px + dp.channel * subW;
+
+        const ch = dp.channel;
         if (dp.type === 'off') { outCtx.fillStyle = '#000'; }
-        else { outCtx.fillStyle = ['rgb(255,0,0)','rgb(0,255,0)','rgb(0,0,255)'][dp.channel]; }
-        outCtx.fillRect(sx, py, subW, pixelSize);
+        else { outCtx.fillStyle = ['rgb(255,0,0)','rgb(0,255,0)','rgb(0,0,255)'][ch]; }
+
+        if (layout === 'rgb-stripe') {
+          const subW = (pixelSize - gap * 2) / 3;
+          const cellH = pixelSize - gap;
+          const rad = pxRound * Math.min(subW, cellH) * 0.5;
+          fillSubPixel(px + (subW + gap) * ch, py, subW, cellH, rad);
+        } else if (layout === 'rgb-square') {
+          const halfW = (pixelSize - gap) / 2;
+          const halfH = (pixelSize - gap) / 2;
+          const rad = pxRound * Math.min(halfW, halfH) * 0.5;
+          // ch 0=top-left(R), 1=top-right+bottom-left(G), 2=bottom-right(B)
+          if (ch === 0) fillSubPixel(px, py, halfW, halfH, rad);
+          else if (ch === 1) { fillSubPixel(px + halfW + gap, py, halfW, halfH, rad); fillSubPixel(px, py + halfH + gap, halfW, halfH, rad); }
+          else fillSubPixel(px + halfW + gap, py + halfH + gap, halfW, halfH, rad);
+        } else if (phosphor === 'shadow') {
+          const scanlineGap = Math.max(1, gap * 1.5);
+          const dotW = pixelSize / 3;
+          const dotR = Math.min(dotW, pixelSize - scanlineGap) * 0.48;
+          const cy = py + (pixelSize - scanlineGap) / 2;
+          outCtx.beginPath();
+          outCtx.arc(px + dotW * (ch + 0.5), cy, dotR, 0, Math.PI * 2);
+          outCtx.fill();
+        } else if (phosphor === 'slot') {
+          const scanlineGap = Math.max(1, gap * 1.5);
+          const slotW = (pixelSize - 2) / 3;
+          const slotH = pixelSize - scanlineGap;
+          outCtx.beginPath();
+          roundRect(outCtx, px + (slotW + 1) * ch, py, slotW, slotH, 2);
+          outCtx.fill();
+        } else {
+          const scanlineGap = Math.max(1, gap * 1.5);
+          const stripeW = (pixelSize - 2) / 3;
+          const cellH = pixelSize - scanlineGap;
+          outCtx.fillRect(px + (stripeW + 1) * ch, py, stripeW, cellH);
+        }
       }
     }
   </script>
