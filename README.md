@@ -2,6 +2,8 @@
 
 A browser-based LCD/CRT pixel-effect tool. Apply RGB subpixel, shadow mask, slot mask, and aperture grille filters to images, or generate pure pattern art in SVG and PNG.
 
+![PixelFilter screenshot](screenshot.png)
+
 ![Mac OS X Leopard-styled UI](https://img.shields.io/badge/UI-Aqua-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Features
